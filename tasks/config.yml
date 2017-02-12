@@ -1,0 +1,10 @@
+- name: config | add individual settings
+  ini_file:
+    dest: '{{ couchpotato_config_file }}'
+    section: '{{ couchpotato_settings_section.key }}'
+    option: '{{ couchpotato_setting.key }}'
+    value: '{{ couchpotato_setting.value }}'
+    state: present
+  loop_control:
+    loop_var: couchpotato_setting
+  with_dict: '{{ couchpotato_settings_section.value }}'

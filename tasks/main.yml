@@ -1,0 +1,75 @@
+---
+- fail:
+    msg: 'This role is designed for systems using systemd'
+  # Default to systemd, in case fact gathering is off.
+  when: (ansible_service_mgr | default('systemd') != 'systemd'
+
+# tasks file for ansible-role-couchpotato
+- block:
+    - name: main | create supplementary groups
+      group:
+        name: '{{ couchpotato_systemd_supplementary_group }}'
+      loop_control:
+        loop_var: couchpotato_systemd_supplementary_group
+      with_items: '{{ couchpotato_systemd_supplementary_groups }}'
+
+    - name: main | create custom systemd configuration directory
+      file:
+        path: '{{ couchpotato_systemd_custom_config | dirname }}'
+        state: directory
+
+    - name: main | template custom systemd configuration
+      template:
+        src: couchpotato.service.j2
+        dest: '{{ couchpotato_systemd_custom_config }}'
+  when: couchpotato_systemd_supplementary_groups | length > 0
+
+- name: main | create couchpotato user
+  user:
+    name: couchpotato
+    group: couchpotato
+    shell: '/sbin/nologin'
+    state: present
+
+- name: main | create data dir and config file parent dir
+  file:
+    path: '{{ couchpotato_dir }}'
+    state: directory
+    owner: couchpotato
+    group: couchpotato
+    recurse: yes
+  loop_control:
+    loop_var: couchpotato_dir
+  with_items:
+    - '{{ couchpotato_data_dir }}'
+    - '{{ couchpotato_config_file | dirname }}'
+
+- name: main | create environment file directory
+  file:
+    path: '{{ couchpotato_environment_file | dirname }}'
+    state: directory
+
+- name: main | create couchpotato environment file
+  template:
+    src: couchpotato.conf.d.j2
+    dest: '{{ couchpotato_environment_file }}'
+
+- name: main | start and stop couchpotato service to generate configuration file
+  systemd:
+    name: couchpotato
+    state: '{{ couchpotato_service_state }}'
+    daemon_reload: yes
+    # Also enable the service :)
+    enabled: yes
+  loop_control:
+    loop_var: couchpotato_service_state
+  with_items:
+    - restarted
+    - stopped
+  changed_when: no
+
+- name: main | tweak couchpotato's configuration file
+  include: config.yml
+  loop_control:
+    loop_var: couchpotato_settings_section
+  with_dict: '{{ couchpotato_settings }}'

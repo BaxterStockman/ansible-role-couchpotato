@@ -1,0 +1,7 @@
+---
+# defaults file for ansible-role-couchpotato
+couchpotato_systemd_supplementary_groups:
+  - downloads
+couchpotato_settings: {}
+couchpotato_data_dir: /var/data/couchpotato
+couchpotato_config_file: '{{ couchpotato_data_dir }}/config.ini'

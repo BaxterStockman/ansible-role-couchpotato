@@ -1,0 +1,8 @@
+{{ ansible_managed | comment }}
+# Configuration file for CouchPotato daemon.
+
+# Path to CouchPotato configuration file.
+CP_CONF={{ couchpotato_config_file | quote }}
+
+# Path to CouchPotato data directory.
+CP_DATA={{ couchpotato_data_dir | quote }}
